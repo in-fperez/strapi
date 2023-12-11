@@ -72,6 +72,11 @@ const CollectionTypeFormWrapper = ({
 
   const requestURL =
     isCreatingEntry && !origin ? null : `/content-manager/collection-types/${slug}/${origin || id}`;
+  
+    const currentContentTypeLayout = get(allLayoutData, ['contentType'], {});
+    const hasVersions = () => {
+      return get(currentContentTypeLayout, ['pluginOptions', 'versions', 'versioned'], false);
+    };
 
   const cleanReceivedData = React.useCallback(
     (data: EntityData) => {
@@ -244,6 +249,10 @@ const CollectionTypeFormWrapper = ({
 
         const { id: _id, ...restBody } = body;
 
+        if (hasVersions) {
+          body.isDuplicatingEntry = isCreatingEntry && !!origin
+        }
+
         const { data } = await post<
           Contracts.CollectionTypes.Create.Response | Contracts.CollectionTypes.Clone.Response,
           AxiosResponse<
@@ -254,10 +263,10 @@ const CollectionTypeFormWrapper = ({
         >(
           isCloning
             ? `/content-manager/collection-types/${slug}/clone/${origin}`
-            : `/content-manager/collection-types/${slug}`,
+            : hasVersions ? `/content-versioning/${slug}/save${rawQuery}` : `/content-manager/collection-types/${slug}`,
           isCloning ? restBody : body,
           {
-            params: query,
+            params: hasVersions ? rawQuery : query,
           }
         );
 
@@ -375,11 +384,15 @@ const CollectionTypeFormWrapper = ({
 
         dispatch(setStatus('submit-pending'));
 
-        const { data } = await put<
+        const { data } = hasVersions ? await post<
           Contracts.CollectionTypes.Update.Response,
           AxiosResponse<Contracts.CollectionTypes.Update.Response>,
           Contracts.CollectionTypes.Update.Request['body']
-        >(`/content-manager/collection-types/${slug}/${id}`, body);
+        >( hasVersions ? `/content-versioning/${slug}/save${rawQuery}` : `/content-manager/collection-types/${slug}/${id}`, body) : await put<
+          Contracts.CollectionTypes.Update.Response,
+          AxiosResponse<Contracts.CollectionTypes.Update.Response>,
+          Contracts.CollectionTypes.Update.Request['body']
+        >( hasVersions ? `/content-versioning/${slug}/save${rawQuery}` : `/content-manager/collection-types/${slug}/${id}`, body);
 
         trackUsage('didEditEntry', trackerProperty);
         toggleNotification({
@@ -393,6 +406,10 @@ const CollectionTypeFormWrapper = ({
         dispatch(submitSucceeded(cleanReceivedData(data)));
 
         dispatch(setStatus('resolved'));
+
+        if (hasVersions){
+          replace(`/content-manager/collectionType/${slug}/${data.id}${rawQuery}`)
+        }
 
         return Promise.resolve(data);
       } catch (err) {
