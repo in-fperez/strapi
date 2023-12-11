@@ -89,6 +89,7 @@ const EditViewDataManagerProvider = ({
   const allLayoutData = useTypedSelector(
     (state) => state['content-manager_editViewLayoutManager'].currentLayout
   );
+
   const [isSaving, setIsSaving] = React.useState(false);
   /**
    * TODO: this should be moved into the global reducer
@@ -113,6 +114,10 @@ const EditViewDataManagerProvider = ({
   const { lockApp, unlockApp } = useOverlayBlocker();
 
   const currentContentTypeLayout = allLayoutData.contentType;
+
+  const hasVersions = React.useMemo(() => {
+    return get(currentContentTypeLayout, ['pluginOptions', 'versions', 'versioned'], false);
+  }, [currentContentTypeLayout]);
 
   const hasDraftAndPublish = React.useMemo(() => {
     return get(currentContentTypeLayout, ['options', 'draftAndPublish'], false);
@@ -752,7 +757,7 @@ const EditViewDataManagerProvider = ({
         <>
           {!isSaving ? (
             <Prompt
-              when={!isEqual(modifiedData, initialData)}
+              when={!hasVersions && !isEqual(modifiedData, initialData)}
               message={formatMessage({ id: 'global.prompt.unsaved' })}
             />
           ) : null}
