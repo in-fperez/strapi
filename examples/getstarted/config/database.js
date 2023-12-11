@@ -21,10 +21,10 @@ const mysql = {
   client: 'mysql',
   connection: {
     database: 'strapi',
-    user: 'strapi',
-    password: 'strapi',
+    user: 'MSUser',
+    password: 'MSUser',
     port: 3306,
-    host: 'localhost',
+    host: '10.3.200.156',
   },
 };
 
@@ -35,7 +35,7 @@ const mysql2 = {
     user: 'strapi',
     password: 'strapi',
     port: 3306,
-    host: 'localhost',
+    host: '10.3.200.156',
   },
 };
 
